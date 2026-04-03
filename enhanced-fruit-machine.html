@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>🎰 水果机</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:radial-gradient(ellipse at top,#1a1a2e,#0f0f1a);min-height:100vh;display:flex;justify-content:center;align-items:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#fff;overflow:hidden}
+.game-container{width:100%;max-width:420px;padding:12px;touch-action:manipulation}
+.balance-panel{text-align:center;margin-bottom:12px}
+.balance-label{font-size:13px;color:#888;text-transform:uppercase;letter-spacing:2px;margin-bottom:4px}
+.balance-amount{font-size:36px;font-weight:bold;color:#ffd700;text-shadow:0 0 20px rgba(255,215,0,0.4)}
+.slot-machine{background:linear-gradient(145deg,#2a2a4a,#1a1a2e);border-radius:20px;padding:20px;box-shadow:0 10px 40px rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,255,255,0.1);margin-bottom:16px}
+.reel-container{display:flex;gap:10px;justify-content:center;margin-bottom:20px}
+.reel{width:90px;height:90px;background:#111;border-radius:12px;border:2px solid #333;display:flex;align-items:center;justify-content:center;font-size:54px;overflow:hidden;position:relative;box-shadow:inset 0 2px 10px rgba(0,0,0,0.8)}
+.reel::after{content:'';position:absolute;inset:0;border-radius:10px;box-shadow:inset 0 0 15px rgba(255,215,0,0.05);pointer-events:none}
+.win-indicator{position:absolute;inset:-4px;border-radius:14px;border:3px solid #ffd700;box-shadow:0 0 20px #ffd700,inset 0 0 20px rgba(255,215,0,0.3);opacity:0;transition:opacity 0.1s;pointer-events:none;z-index:10}
+.win-indicator.active{opacity:1;animation:pulse-win 0.4s ease-in-out infinite alternate}
+@keyframes pulse-win{from{box-shadow:0 0 20px #ffd700,inset 0 0 20px rgba(255,215,0,0.3)}to{box-shadow:0 0 40px #ffd700,inset 0 0 30px rgba(255,215,0,0.5)}}
+@keyframes spin-reel{0%{transform:translateY(0)}20%{transform:translateY(-200%)}40%{transform:translateY(-400%)}60%{transform:translateY(-600%)}80%{transform:translateY(-800%)}100%{transform:translateY(-1000%)}}
+.reel.spinning .reel-inner{animation:spin-reel 0.1s linear infinite}
+.reel-inner{display:flex;flex-direction:column;font-size:54px;line-height:1}
+.spin-btn{width:100%;padding:18px;font-size:20px;font-weight:bold;background:linear-gradient(145deg,#e63946,#c1121f);color:white;border:none;border-radius:12px;cursor:pointer;transition:transform 0.1s,box-shadow 0.1s;box-shadow:0 4px 15px rgba(230,57,70,0.4);letter-spacing:1px}
+.spin-btn:active:not(:disabled){transform:scale(0.96)}
+.spin-btn:disabled{background:#444;box-shadow:none;cursor:not-allowed}
+.bet-panel{background:rgba(255,255,255,0.05);border-radius:16px;padding:16px;margin-bottom:12px}
+.bet-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.bet-label{font-size:14px;color:#aaa;white-space:nowrap}
+.bet-buttons{display:flex;gap:6px;flex-wrap:wrap}
+.bet-btn{padding:8px 14px;font-size:14px;background:#333;color:#fff;border:1px solid #444;border-radius:8px;cursor:pointer;transition:all 0.15s}
+.bet-btn:active{transform:scale(0.94)}
+.bet-btn.active{background:#e63946;border-color:#e63946;box-shadow:0 0 10px rgba(230,57,70,0.5)}
+.bet-amount-display{text-align:center;font-size:18px;color:#ffd700;margin-top:8px;font-weight:bold}
+.paytable{background:rgba(255,255,255,0.05);border-radius:16px;padding:14px 16px;margin-bottom:12px}
+.paytable-title{font-size:13px;color:#888;text-transform:uppercase;letter-spacing:2px;margin-bottom:10px}
+.paytable-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.pay-item{background:#1a1a2e;border-radius:8px;padding:8px 4px;text-align:center;font-size:13px}
+.pay-symbol{font-size:26px;margin-bottom:2px}
+.pay-name{color:#888;font-size:10px;margin-bottom:2px}
+.pay-ratio{color:#ffd700;font-weight:bold;font-size:12px}
+.stats-bar{display:flex;justify-content:space-around;background:rgba(255,255,255,0.05);border-radius:12px;padding:12px;margin-bottom:12px}
+.stat-item{text-align:center}
+.stat-value{font-size:18px;font-weight:bold;color:#ffd700}
+.stat-label{font-size:11px;color:#666;text-transform:uppercase;letter-spacing:1px}
+.message-overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.7);z-index:100;opacity:0;pointer-events:none;transition:opacity 0.3s}
+.message-overlay.show{opacity:1;pointer-events:auto}
+.message-box{background:linear-gradient(145deg,#2a2a4a,#1a1a2e);border-radius:20px;padding:30px 40px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.5);transform:scale(0.8);transition:transform 0.3s}
+.message-overlay.show .message-box{transform:scale(1)}
+.message-emoji{font-size:64px;margin-bottom:10px}
+.message-text{font-size:24px;font-weight:bold;margin-bottom:6px}
+.message-sub{font-size:14px;color:#888}
+.gamble-panel{display:none;background:linear-gradient(145deg,#2a2a4a,#1a1a2e);border-radius:20px;padding:20px;margin-bottom:12px;text-align:center}
+.gamble-panel.show{display:block}
+.gamble-title{font-size:16px;color:#888;margin-bottom:12px;letter-spacing:2px}
+.gamble-prize{font-size:28px;font-weight:bold;color:#ffd700;margin-bottom:16px}
+.gamble-buttons{display:flex;gap:12px}
+.gamble-btn{flex:1;padding:14px;font-size:16px;font-weight:bold;border:none;border-radius:10px;cursor:pointer;transition:transform 0.1s}
+.gamble-btn:active{transform:scale(0.95)}
+.gamble-red{background:#e63946;color:white}
+.gamble-black{background:#1a1a2e;color:white;border:2px solid #444}
+.result-choice{font-size:18px;margin-top:10px;color:#aaa}
+</style>
+</head>
+<body>
+<div class="game-container">
+  <div class="balance-panel">
+    <div class="balance-label">💰 余额</div>
+    <div class="balance-amount">$<span id="balance">1000</span></div>
+  </div>
+  <div class="slot-machine">
+    <div class="reel-container">
+      <div class="reel" id="reel0"><div class="win-indicator" id="wi0"></div><div class="reel-inner">🍒</div></div>
+      <div class="reel" id="reel1"><div class="win-indicator" id="wi1"></div><div class="reel-inner">🍒</div></div>
+      <div class="reel" id="reel2"><div class="win-indicator" id="wi2"></div><div class="reel-inner">🍒</div></div>
+    </div>
+    <button class="spin-btn" id="btnSpin" onclick="spin()">🎰 开始旋转</button>
+  </div>
+  <div class="bet-panel">
+    <div class="bet-row">
+      <span class="bet-label">金额</span>
+      <div class="bet-buttons">
+        <button class="bet-btn" onclick="setBet(10)">$10</button>
+        <button class="bet-btn" onclick="setBet(25)">$25</button>
+        <button class="bet-btn active" onclick="setBet(50)">$50</button>
+        <button class="bet-btn" onclick="setBet(100)">$100</button>
+      </div>
+    </div>
+    <div class="bet-amount-display">当前下注: $<span id="currentBet">50</span></div>
+  </div>
+  <div class="stats-bar">
+    <div class="stat-item"><div class="stat-value" id="totalSpins">0</div><div class="stat-label">旋转</div></div>
+    <div class="stat-item"><div class="stat-value" id="totalWins">0</div><div class="stat-label">赢局</div></div>
+    <div class="stat-item"><div class="stat-value" id="totalJackpots">0</div><div class="stat-label"> jackpot</div></div>
+    <div class="stat-item"><div class="stat-value" id="maxWin">0</div><div class="stat-label">最高</div></div>
+  </div>
+  <div class="message-overlay" id="msgOverlay" onclick="closeMsg()">
+    <div class="message-box">
+      <div class="message-emoji" id="msgEmoji">🎉</div>
+      <div class="message-text" id="msgText">中奖了！</div>
+      <div class="message-sub" id="msgSub">+$250</div>
+    </div>
+  </div>
+  <div class="gamble-panel" id="gamblePanel">
+    <div class="gamble-title">🎰 博彩模式</div>
+    <div class="gamble-prize">$<span id="gambleAmount">0</span></div>
+    <div style="font-size:14px;color:#888;margin-bottom:12px;">猜红色(♥♦)还是黑色(♠♣)？</div>
+    <div class="gamble-buttons">
+      <button class="gamble-btn gamble-red" onclick="gamblePick('red')">♥♦ 红色</button>
+      <button class="gamble-btn gamble-black" onclick="gamblePick('black')">♠♣ 黑色</button>
+    </div>
+    <button class="spin-btn" style="margin-top:12px;font-size:14px;padding:10px;background:#333;" onclick="gambleCollect()">🏧 收取 ($<span id="gambleCollectAmt">0</span>)</button>
+    <div class="result-choice" id="gambleResult"></div>
+  </div>
+  <button class="spin-btn" style="margin-top:4px;font-size:13px;background:#1a1a2e;box-shadow:none;" onclick="resetGame()">🔄 重新开始</button>
+</div>
+<script>
+const SYMBOLS = ['🍒','🍋','🔔','⭐','💎','7️⃣'];
+const WEIGHTS = [35,25,15,12,8,5];
+const PAYOUTS = { '🍒':2, '🍋':3, '🔔':5, '⭐':10, '💎':20, '7️⃣':50 };
+let balance = 1000, currentBet = 50, isSpinning = false;
+let totalSpins = 0, totalWins = 0, totalJackpots = 0, maxWin = 0;
+let gambleAmount = 0;
+let currentResult = [];
+
+function getRand() {
+  let r = Math.random() * 100, w = 0;
+  for (let i = 0; i < WEIGHTS.length; i++) { w += WEIGHTS[i]; if (r < w) return i; }
+  return 0;
+}
+
+function setBet(amt) {
+  if (isSpinning) return;
+  currentBet = amt;
+  document.getElementById('currentBet').textContent = amt;
+  document.querySelectorAll('.bet-btn').forEach((b,i) => {
+    b.classList.toggle('active', [10,25,50,100][i] === amt);
+  });
+}
+
+function showMsg(emoji, text, sub) {
+  document.getElementById('msgEmoji').textContent = emoji;
+  document.getElementById('msgText').textContent = text;
+  document.getElementById('msgSub').textContent = sub;
+  document.getElementById('msgOverlay').classList.add('show');
+}
+
+function closeMsg() { document.getElementById('msgOverlay').classList.remove('show'); }
+
+function spin() {
+  if (isSpinning || balance < currentBet) {
+    if (balance < currentBet) showMsg('💸','余额不足！','请降低下注金额');
+    return;
+  }
+  isSpinning = true;
+  balance -= currentBet;
+  document.getElementById('balance').textContent = balance;
+  document.getElementById('btnSpin').disabled = true;
+  document.querySelectorAll('.win-indicator').forEach(w => w.classList.remove('active'));
+  document.getElementById('gamblePanel').classList.remove('show');
+  totalSpins++;
+  document.getElementById('totalSpins').textContent = totalSpins;
+
+  let final = [getRand(), getRand(), getRand()];
+  let spinCount = 0, maxSpins = 30;
+  let reels = ['reel0','reel1','reel2'];
+  let intervals = reels.map((id, idx) => setInterval(() => {
+    let sym = SYMBOLS[getRand()];
+    let el = document.getElementById(id);
+    el.querySelector('.reel-inner').textContent = sym;
+    spinCount++;
+    if (spinCount >= maxSpins - idx * 3) {
+      clearInterval(intervals[idx]);
+      el.querySelector('.reel-inner').textContent = SYMBOLS[final[idx]];
+    }
+  }, 80));
+
+  setTimeout(() => {
+    isSpinning = false;
+    document.getElementById('btnSpin').disabled = balance < currentBet;
+    currentResult = final.map(i => SYMBOLS[i]);
+    let s0 = SYMBOLS[final[0]], s1 = SYMBOLS[final[1]], s2 = SYMBOLS[final[2]];
+    let allSame = s0 === s1 && s1 === s2;
+    let twoSame = !allSame && (s0 === s1 || s1 === s2 || s0 === s2);
+    if (allSame) {
+      let win = currentBet * PAYOUTS[s0];
+      balance += win;
+      document.getElementById('balance').textContent = balance;
+      document.querySelectorAll('.win-indicator').forEach(w => w.classList.add('active'));
+      totalWins++;
+      document.getElementById('totalWins').textContent = totalWins;
+      if (win > maxWin) { maxWin = win; document.getElementById('maxWin').textContent = maxWin; }
+      if (s0 === '7️⃣') { totalJackpots++; document.getElementById('totalJackpots').textContent = totalJackpots; }
+      setTimeout(() => showMsg('🎉',' jackpot！','+' + win), 100);
+    } else if (twoSame) {
+      let win = currentBet * 1.5;
+      balance += win;
+      document.getElementById('balance').textContent = balance;
+      let wi = document.getElementById('wi' + (s0 === s1 ? 0 : s1 === s2 ? 1 : 0));
+      wi.classList.add('active');
+      total
