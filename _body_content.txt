@@ -1,0 +1,42 @@
+<body>
+<button class="sound-toggle" id="soundToggle">🔊</button>
+<div class="status-bar">
+  <div class="balance-section">
+    <div class="balance">💰 <span id="balance">1000</span></div>
+    <div class="level-badge">LV<span id="level">1</span></div>
+    <div class="exp-bar-wrap"><div class="exp-bar" id="expBar" style="width:0%"></div></div>
+  </div>
+  <div class="total-bet">总押注: <span id="totalBet">0</span></div>
+  <div class="jackpot-display">🏆 奖池: <span id="jackpot">5000</span></div>
+</div>
+<div class="msg-bar" id="msgBar">点击水果选中押注，选择押注等级，点击开始！</div>
+<div class="history-panel" id="historyPanel"><span style="font-size:11px;color:#888">最近: </span></div>
+<div class="wheel-container">
+  <div class="wheel-ring" id="wheelRing">
+    <div class="pointer"></div>
+    <div class="center-display">
+      <div class="center-label">中奖区</div>
+      <div class="jackpot-label">🏆 奖池</div>
+    </div>
+  </div>
+</div>
+<div class="bet-level-row">
+  <button class="bet-level-btn" data-level="1">等级1</button>
+  <button class="bet-level-btn active" data-level="10">等级10</button>
+  <button class="bet-level-btn" data-level="50">等级50</button>
+  <button class="bet-level-btn" data-level="100">等级100</button>
+</div>
+<div class="bet-row">
+  <button class="btn btn-bet" id="btnMinus">-10</button>
+  <button class="btn btn-bet" id="btnPlus">+10</button>
+</div>
+<div class="controls">
+  <button class="btn btn-start" id="btnStart">开始</button>
+  <button class="btn btn-stop" id="btnStop" disabled>停止</button>
+  <button class="btn btn-auto" id="btnAuto">自动</button>
+  <button class="btn btn-clear" id="btnClear">清空</button>
+  <button class="btn btn-gamble" id="btnGamble">博一把</button>
+</div>
+<div class="gamble-panel" id="gamblePanel">
+  <div class="gamble-title">🎰 博彩模式</div>
+  <div class="gamble-amount">当前: <span id="gambleAmount
